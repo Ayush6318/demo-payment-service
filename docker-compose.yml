@@ -1,0 +1,62 @@
+services:
+  demo-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: payments
+    ports: ["5433:5432"]
+    volumes: [demodb:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo -d payments"]
+      interval: 5s
+      retries: 10
+
+  payment-service:
+    build:
+      context: .
+      args:
+        GIT_SHA: ${GIT_SHA:-dev}
+    ports: ["8001:8000"]
+    mem_limit: 256m
+    restart: unless-stopped
+    labels:
+      logging: "promtail"
+    depends_on:
+      demo-db:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    ports: ["9091:9090"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+    depends_on: [payment-service]
+
+  loki:
+    image: grafana/loki:3.0.0
+    ports: ["3101:3100"]
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on: [loki]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports: ["3000:3000"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    depends_on: [prometheus, loki]
+
+volumes:
+  demodb:
+
+
