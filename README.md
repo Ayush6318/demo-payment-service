@@ -18,7 +18,7 @@ docker compose ps
 
 Invoke-RestMethod http://localhost:8001/health
 ```
-Open: Grafana http://localhost:3000 | Prometheus http://localhost:9090 | Loki http://localhost:3100/ready
+Open: Grafana http://localhost:3000 | Prometheus http://localhost:9091 | Loki http://localhost:3101/ready
 
 ## Put it on GitHub (needed so the code agent can read real commits)
 ```powershell
