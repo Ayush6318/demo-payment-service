@@ -9,7 +9,7 @@ POOL_SIZE = 5
 POOL_TIMEOUT_S = 3
 
 # --- payment processing ---
-BATCH_SIZE = 100
+BATCH_SIZE = 1000
 ITEM_WORK_S = 0.002
 
 # --- features ---
